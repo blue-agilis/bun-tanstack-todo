@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, X } from "lucide-react";
@@ -14,12 +14,10 @@ import { createTodoFn, deleteTodoFn, getTodosFn, type Todo, toggleTodoCompleteFn
 
 export const Route = createFileRoute("/")({
 	component: App,
-	loader: async () => await getTodosFn(),
+	loader: async () => getTodosFn(),
 });
 
 function App() {
-	const queryClient = useQueryClient();
-
 	const getTodos = useServerFn(getTodosFn);
 	const addTodo = useServerFn(createTodoFn);
 	const toggleTodo = useServerFn(toggleTodoCompleteFn);
@@ -39,25 +37,14 @@ function App() {
 
 	const { mutate: mutateAddTodo } = useMutation({
 		mutationFn: (title: string) => addTodo({ data: { title } }),
-		onSuccess: (newTodo) => {
-			queryClient.setQueryData<Todo[]>(["todos"], (oldTodos = []) => [newTodo, ...oldTodos]);
-		},
 	});
 
 	const { mutate: mutateToggleTodo } = useMutation({
 		mutationFn: (id: number) => toggleTodo({ data: { id } }),
-		onSuccess: (updatedTodo) => {
-			queryClient.setQueryData<Todo[]>(["todos"], (oldTodos = []) =>
-				oldTodos.map((todo) => (todo.id === updatedTodo.id ? updatedTodo : todo)),
-			);
-		},
 	});
 
 	const { mutate: mutateDeleteTodo } = useMutation({
 		mutationFn: (id: number) => deleteTodo({ data: { id } }),
-		onSuccess: (_, deletedId) => {
-			queryClient.setQueryData<Todo[]>(["todos"], (oldTodos = []) => oldTodos.filter((todo) => todo.id !== deletedId));
-		},
 	});
 
 	const stats = useMemo(
