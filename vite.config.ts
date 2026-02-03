@@ -6,25 +6,20 @@ import { defineConfig } from "vite";
 import viteTsConfigPaths from "vite-tsconfig-paths";
 
 const config = defineConfig({
-	plugins: [
-		// this is the plugin that enables path aliases
-		viteTsConfigPaths({
-			projects: ["./tsconfig.json"],
-		}),
-		tailwindcss(),
-		tanstackStart(),
-		nitro({
-			// Uncomment this to enable Vercel deployment
-			// config: {
-			// 	vercel: {
-			// 		functions: {
-			// 			runtime: "bun1.x",
-			// 		},
-			// 	},
-			// },
-		}),
-		viteReact(),
-	],
+  plugins: [
+    // this is the plugin that enables path aliases
+    viteTsConfigPaths({
+      projects: ["./tsconfig.json"],
+    }),
+    tailwindcss(),
+    tanstackStart(),
+    nitro({
+      config: {
+        preset: "bun",
+      },
+    }),
+    viteReact(),
+  ],
 });
 
 export default config;
