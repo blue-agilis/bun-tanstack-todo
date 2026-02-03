@@ -7,6 +7,7 @@
     "dev": "bun --bun vite dev",
     "build": "bun --bun vite build",
     "serve": "bun --bun vite preview",
+    "postinstall": "prisma generate",
     "lint": "biome check",
     "format": "biome format --write",
     "db:seed": "bun run scripts/seed.ts"
