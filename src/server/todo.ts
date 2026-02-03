@@ -1,82 +1,90 @@
+import { auth } from "@clerk/tanstack-react-start/server";
 import { createServerFn } from "@tanstack/react-start";
-import { sql } from "bun";
 import z from "zod";
 
+import { prisma } from "@/db";
+
 export interface Todo {
-	id: number;
-	title: string;
-	completed: boolean;
-	created_at?: Date | string;
+  id: string;
+  title: string;
+  completed: boolean;
+  userId: string;
+  createdAt: Date;
 }
 
-async function ensureTodosTable() {
-	try {
-		await sql`
-			CREATE TABLE IF NOT EXISTS todos (
-				id SERIAL PRIMARY KEY,
-				title TEXT NOT NULL,
-				completed BOOLEAN NOT NULL DEFAULT false,
-				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-			)
-		`;
-	} catch (error) {
-		console.error("Error creating todos table:", error);
-	}
+async function requireAuth() {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+  return userId;
 }
 
-export const getTodosFn = createServerFn({ method: "GET" }).handler(async () => {
-	try {
-		await ensureTodosTable();
+export const getTodosFn = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const userId = await requireAuth();
 
-		const result = await sql`SELECT * FROM todos ORDER BY id DESC`;
-		return result;
-	} catch (error) {
-		console.error("Error fetching todos:", error);
-		throw new Error("Failed to fetch todos");
-	}
-});
+    const todos = await prisma.todo.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return todos;
+  },
+);
 
 export const createTodoFn = createServerFn({ method: "POST" })
-	.inputValidator(z.object({ title: z.string().min(1).max(500) }))
-	.handler(async ({ data }) => {
-		try {
-			const result = await sql`INSERT INTO todos (title) VALUES (${data.title}) RETURNING *`;
-			if (!result || result.length === 0) {
-				throw new Error("Failed to create todo");
-			}
-			return result[0];
-		} catch (error) {
-			console.error("Error creating todo:", error);
-			throw new Error("Failed to create todo");
-		}
-	});
+  .inputValidator(z.object({ title: z.string().min(1).max(500) }))
+  .handler(async ({ data }) => {
+    const userId = await requireAuth();
+
+    const todo = await prisma.todo.create({
+      data: {
+        title: data.title,
+        userId,
+      },
+    });
+
+    return todo;
+  });
 
 export const toggleTodoCompleteFn = createServerFn({ method: "POST" })
-	.inputValidator(z.object({ id: z.number().int().positive() }))
-	.handler(async ({ data }) => {
-		try {
-			const result = await sql`UPDATE todos SET completed = NOT completed WHERE id = ${data.id} RETURNING *`;
-			if (!result || result.length === 0) {
-				throw new Error("Todo not found");
-			}
-			return result[0];
-		} catch (error) {
-			console.error("Error toggling todo:", error);
-			throw new Error("Failed to toggle todo");
-		}
-	});
+  .inputValidator(z.object({ id: z.string() }))
+  .handler(async ({ data }) => {
+    const userId = await requireAuth();
+
+    const existing = await prisma.todo.findFirst({
+      where: { id: data.id, userId },
+    });
+
+    if (!existing) {
+      throw new Error("Todo not found");
+    }
+
+    const todo = await prisma.todo.update({
+      where: { id: data.id },
+      data: { completed: !existing.completed },
+    });
+
+    return todo;
+  });
 
 export const deleteTodoFn = createServerFn({ method: "POST" })
-	.inputValidator(z.object({ id: z.number().int().positive() }))
-	.handler(async ({ data }) => {
-		try {
-			const result = await sql`DELETE FROM todos WHERE id = ${data.id} RETURNING id`;
-			if (!result || result.length === 0) {
-				throw new Error("Todo not found");
-			}
-			return { id: data.id };
-		} catch (error) {
-			console.error("Error deleting todo:", error);
-			throw new Error("Failed to delete todo");
-		}
-	});
+  .inputValidator(z.object({ id: z.string() }))
+  .handler(async ({ data }) => {
+    const userId = await requireAuth();
+
+    const existing = await prisma.todo.findFirst({
+      where: { id: data.id, userId },
+    });
+
+    if (!existing) {
+      throw new Error("Todo not found");
+    }
+
+    await prisma.todo.delete({
+      where: { id: data.id },
+    });
+
+    return { id: data.id };
+  });

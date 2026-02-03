@@ -62,11 +62,11 @@ function App() {
   });
 
   const { mutate: mutateToggleTodo } = useMutation({
-    mutationFn: (id: number) => toggleTodo({ data: { id } }),
+    mutationFn: (id: string) => toggleTodo({ data: { id } }),
   });
 
   const { mutate: mutateDeleteTodo } = useMutation({
-    mutationFn: (id: number) => deleteTodo({ data: { id } }),
+    mutationFn: (id: string) => deleteTodo({ data: { id } }),
   });
 
   const stats = useMemo(
@@ -178,8 +178,8 @@ function TodoItem({
   handleDeleteTodo,
 }: {
   todo: Todo;
-  handleToggleTodo: (id: number) => void;
-  handleDeleteTodo: (id: number) => void;
+  handleToggleTodo: (id: string) => void;
+  handleDeleteTodo: (id: string) => void;
 }) {
   const checkboxId = `todo-${todo.id}`;
 
