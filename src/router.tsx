@@ -5,29 +5,24 @@ import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query
 import { routeTree } from "./routeTree.gen";
 
 export const queryClient = new QueryClient({
-	mutationCache: new MutationCache({
-		onSuccess: () => {
-			queryClient.invalidateQueries();
-		},
-	}),
-	defaultOptions: {
-		queries: {
-			staleTime: 10_000,
-		},
-	},
+  mutationCache: new MutationCache({
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+    },
+  }),
 });
 
 export const getRouter = () => {
-	const router = createRouter({
-		routeTree,
-		scrollRestoration: true,
-		defaultPreloadStaleTime: 0,
-	});
+  const router = createRouter({
+    routeTree,
+    scrollRestoration: true,
+    defaultPreloadStaleTime: 0,
+  });
 
-	setupRouterSsrQueryIntegration({
-		router,
-		queryClient,
-	});
+  setupRouterSsrQueryIntegration({
+    router,
+    queryClient,
+  });
 
-	return router;
+  return router;
 };
