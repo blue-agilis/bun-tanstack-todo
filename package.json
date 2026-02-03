@@ -7,7 +7,6 @@
     "dev": "bun --bun vite dev",
     "build": "bun --bun vite build",
     "serve": "bun --bun vite preview",
-    "start": "bun --bun .output/server/index.mjs",
     "lint": "biome check",
     "format": "biome format --write",
     "db:seed": "bun run scripts/seed.ts"
