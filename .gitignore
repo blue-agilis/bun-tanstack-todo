@@ -5,4 +5,3 @@ dist
 .nitro
 .tanstack
 .output
-./generated/prisma
